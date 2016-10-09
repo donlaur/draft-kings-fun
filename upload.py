@@ -4,7 +4,10 @@ from itertools import islice
 import dke_exceptions as dke
 from data_cleaning_constants import RENAMES
 
-upload_file = 'data/current-upload.csv'
+import os 
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+upload_file = dir_path + '/data/current-upload.csv'
 
 
 def create_upload_file():
@@ -17,7 +20,7 @@ def create_upload_file():
 
 def map_pids(pid_file):
     player_map = {}
-    with open(pid_file, 'r') as f:
+    with open(dir_path + '/' + pid_file, 'r') as f:
         n = 0
         fields = None
         for line in f.readlines():

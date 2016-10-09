@@ -15,8 +15,11 @@ import constants as cons
 from orm import RosterSelect, Player
 from command_line import get_args
 
-fns = 'data/{}-salaries.csv'
-fnp = 'data/{}-projections.csv'
+import os 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+fns = dir_path + '/data/{}-salaries.csv'
+fnp = dir_path + '/data/{}-projections.csv'
 
 
 def run(position_distribution, league, remove, args, test_mode=False):
