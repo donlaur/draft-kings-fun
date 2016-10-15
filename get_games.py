@@ -1,11 +1,10 @@
 import csv
-
 from orm import Game
 
 
 def get_games():
     all_games = []
-    with open('data/current-salaries.csv', 'r') as csvfile:
+    with open('draft_kings_fun/data/current-salaries.csv', 'r') as csvfile:
         csvdata = csv.DictReader(csvfile)
         for idx, row in enumerate(csvdata):
             if idx > 0:
