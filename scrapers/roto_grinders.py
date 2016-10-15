@@ -27,6 +27,6 @@ def scrape():
             if len(p):
                 hold.append([p[0], p[-1]])
 
-    with open('data/current-projections.csv', 'w') as fp:
+    with open('draft_kings_fun/data/current-projections.csv', 'w') as fp:
         w = csv.writer(fp, delimiter=',')
         w.writerows(hold)
