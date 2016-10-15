@@ -5,6 +5,20 @@ class Roster:
     def __init__(self):
         self.players = []
 
+    def __repr__(self):
+        s = '\n'.join(str(x) for x in self.sorted_players())
+        s += "\n\nProjected Score: %s" % self.projected()
+        s += "\tCost: $%s" % self.spent()
+        return s
+
+    def __eq__(self, roster):
+        if len(self.players) == 9 and len(roster.players) == 9:
+            for p in self.players:
+                if not any(filter(lambda x: x == p, roster.players)):
+                    return False
+            return True
+        return False
+
     def add_player(self, player):
         self.players.append(player)
 
@@ -19,12 +33,6 @@ class Roster:
 
     def sorted_players(self):
         return sorted(self.players, key=self.position_order)
-
-    def __repr__(self):
-        s = '\n'.join(str(x) for x in self.sorted_players())
-        s += "\n\nProjected Score: %s" % self.projected()
-        s += "\tCost: $%s" % self.spent()
-        return s
 
 
 class NFLRoster(Roster):
@@ -74,9 +82,6 @@ class Player:
         self.marked = marked
         self.lock = lock
 
-    def get_ppd(self):
-        return round((self.proj / self.cost) * 1000, 3)
-
     def __repr__(self):
         return "[{0: <2}] {1: <20} {2} {3} (${4}, {5}, {6}), {7}, {8}".format(
                 self.pos,
@@ -88,6 +93,15 @@ class Player:
                 self.get_ppd(),
                 self.projected_ownership_pct,
                 'LOCK' if self.lock else '')
+
+    def __eq__(self, player):
+        return self.pos == player.pos and \
+               self.name == player.name and \
+               self.cost == player.cost and \
+               self.team == player.team
+
+    def get_ppd(self):
+        return round((self.proj / self.cost) * 1000, 3)
 
 
 class Team:
@@ -121,3 +135,18 @@ class Team:
             val += int(getattr(getattr(self, pos), prop))
 
         return val
+
+
+class Game:
+    def __init__(self, team, opp):
+        self.team = team
+        self.opponent = opp
+
+    def __repr__(self):
+        return "{} @ {}".format(self.team, self.opponent)
+
+    def team_in_game(self, team):
+        return team == self.team or team == self.opponent
+
+    def get_teams(self):
+        return self.team, self.opponent
