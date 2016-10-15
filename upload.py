@@ -20,7 +20,8 @@ def create_upload_file():
 
 def map_pids(pid_file):
     player_map = {}
-    with open(dir_path + '/' + pid_file, 'r') as f:
+    pid_file = dir_path + '/' + pid_file
+    with open(pid_file, 'r') as f:
         n = 0
         fields = None
         for line in f.readlines():
