@@ -15,11 +15,12 @@ import constants as cons
 from orm import RosterSelect, Player
 from command_line import get_args
 
-import os 
+import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 fns = dir_path + '/data/{}-salaries.csv'
 fnp = dir_path + '/data/{}-projections.csv'
+_YES = 'y'
 
 
 def run(position_distribution, league, remove, args, test_mode=False):
@@ -108,6 +109,9 @@ def run(position_distribution, league, remove, args, test_mode=False):
     all_players = filter(
         qc.add_constraints(args, remove),
         all_players)
+
+    if args.no_double_te == _YES:
+        cons.POSITIONS['NFL'] = cons.get_nfl_positions(te_upper=1)
 
     variables, solution = run_solver(solver,
                                      all_players,
@@ -223,7 +227,7 @@ if __name__ == "__main__":
         upload.create_upload_file()
     if args.pids:
         player_map = upload.map_pids(args.pids)
-    if args.s == 'y' and args.l == 'NFL':
+    if args.s == _YES and args.l == 'NFL':
         try:
             scrapers.scrape(args.source)
         except KeyError:
