@@ -23,7 +23,9 @@ fnp = dir_path + '/data/{}-projections.csv'
 _YES = 'y'
 
 
-def run(position_distribution, league, remove, args, test_mode=False):
+def run(position_distribution, league, remove, args,
+        get_players=False,
+        test_mode=False):
     csv_name = 'test' if test_mode else 'current'
     solver = pywraplp.Solver('FD',
                              pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
@@ -34,16 +36,15 @@ def run(position_distribution, league, remove, args, test_mode=False):
         csvdata = csv.DictReader(csvfile)
 
         for idx, row in enumerate(csvdata):
-            if idx > 0:
-                player = Player(row['Position'], row['Name'], row['Salary'],
-                                team=row['teamAbbrev'],
-                                matchup=row['GameInfo'],
-                                lock=(args.locked and
-                                      row['Name'] in args.locked))
-                if args.l == 'NBA':
-                    player.proj = float(row['AvgPointsPerGame'])
-                    player.team = row['teamAbbrev']
-                all_players.append(player)
+            player = Player(row['Position'], row['Name'], row['Salary'],
+                            team=row['teamAbbrev'],
+                            matchup=row['GameInfo'],
+                            lock=(args.locked and
+                                  row['Name'] in args.locked))
+            if args.l == 'NBA':
+                player.proj = float(row['AvgPointsPerGame'])
+                player.team = row['teamAbbrev']
+            all_players.append(player)
 
     if league == 'NFL':
         if args.po_location and args.po:
@@ -106,6 +107,9 @@ def run(position_distribution, league, remove, args, test_mode=False):
 
     # filter based on criteria and previously optimized
     # do not include DST or TE projections in min point threshold.
+    if get_players:
+        return all_players
+
     all_players = filter(
         qc.add_constraints(args, remove),
         all_players)
