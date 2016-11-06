@@ -15,6 +15,8 @@ def scrape():
     for page in pos:
         content = requests.get(
             ROTO_GRINDERS.format(page)).content.decode('utf-8')
+        print('Scrape success.')
+        print(content)
         cr = csv.reader(content.splitlines(), delimiter=',')
         for p in list(cr):
             if p[0] in [x['name'] for x in DUPLICATES]:

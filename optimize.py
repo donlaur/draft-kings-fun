@@ -26,16 +26,18 @@ _YES = 'y'
 def run(position_distribution, league, remove, args,
         get_players=False,
         test_mode=False):
+
     csv_name = 'test' if test_mode else 'current'
     solver = pywraplp.Solver('FD',
                              pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+
 
     all_players = []
 
     with open(fns.format(csv_name), 'rb') as csvfile:
         csvdata = csv.DictReader(csvfile)
 
-        for idx, row in enumerate(csvdata):
+        for row in csvdata:
             player = Player(row['Position'], row['Name'], row['Salary'],
                             team=row['teamAbbrev'],
                             matchup=row['GameInfo'],
@@ -45,6 +47,12 @@ def run(position_distribution, league, remove, args,
                 player.proj = float(row['AvgPointsPerGame'])
                 player.team = row['teamAbbrev']
             all_players.append(player)
+
+    if args.w and args.season and args.historical == _YES:
+        print('Fetching {} season data for all players...'
+              .format(args.season))
+        for p in all_players:
+            p.set_historical(int(args.w), int(args.season))
 
     if league == 'NFL':
         if args.po_location and args.po:
