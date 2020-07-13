@@ -1,5 +1,22 @@
 *.pyc
 *.sqlite
+*.bat
 .idea/
 \current*
 .coverage
+.DS_Store
+
+# for experimentation
+scratch.py
+lineups.sh
+data/df.csv
+data/fd.csv
+experimental/
+
+.spyproject
+.vscode
+start_container.bat
+
+dist/
+draftfast.egg-info/
+

@@ -1,88 +1,259 @@
-[![Build Status](https://travis-ci.org/BenBrostoff/draft-kings-fun.svg?branch=master)](https://travis-ci.org/BenBrostoff/draft-kings-fun)
+## Introduction &middot; [![Build Status](https://travis-ci.org/BenBrostoff/draftfast.svg?branch=master)](https://travis-ci.org/BenBrostoff/draftfast) &middot; [![](https://draftfast.herokuapp.com/badge.svg)](https://draftfast.herokuapp.com/) &middot; [![](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://www.patreon.com/user?u=8965834)
 
-## Introduction
+![](marketing/NFL_OPTIMIZED.png)
 
-Special thanks to [swanson](https://github.com/swanson/), who authored [this repo](https://github.com/swanson/degenerate), which mine is heavily based off of.
+An incredibly powerful tool that automates and optimizes lineup building, allowing you to enter thousands of lineups in any DraftKings or FanDuel contest in the time it takes you to grab a coffee.
 
-Pre-reqs:
+## Installation
 
-* [ortools](https://developers.google.com/optimization/installing?hl=en)
-* `pip install -r requirements.txt`
+Requires Python 3.6.
 
-To run, download your desired week's salaries on DraftKings, and then run:
- 
-```
-bash scripts/prepare_nfl_contest_data.sh
+```bash
+pip install draftfast
 ```
 
-Note that this script will error out if the CSV from DraftKings is not in `~/Downloads`.
+## Usage
 
-Next, scrape data from FantasyPros or Rotogrinders and allow for some mismatched data between the two sources:
+Example usage ([you can experiment with these examples in repl.it](https://repl.it/@BenBrostoff/AllWarlikeDemoware)):
 
-```
-python optimize.py -mp 100 -s y -source nfl_rotogrinders
-```
+```python
+from draftfast import rules
+from draftfast.optimize import run
+from draftfast.orm import Player
+from draftfast.csv_parse import salary_download
 
-One important note here is that passing in <code>y</code> for the scrape option will create <code>current-projections.csv</code>. However, once you've scraped once, there's no need to do again.
+# Create players for a classic DraftKings game
+player_pool = [
+    Player(name='A1', cost=5500, proj=55, pos='PG'),
+    Player(name='A2', cost=5500, proj=55, pos='PG'),
+    Player(name='A3', cost=5500, proj=55, pos='SG'),
+    Player(name='A4', cost=5500, proj=55, pos='SG'),
+    Player(name='A5', cost=5500, proj=55, pos='SF'),
+    Player(name='A6', cost=5500, proj=55, pos='SF'),
+    Player(name='A7', cost=5500, proj=55, pos='PF'),
+    Player(name='A8', cost=5500, proj=55, pos='PF'),
+    Player(name='A9', cost=5500, proj=55, pos='C'),
+    Player(name='A10', cost=5500, proj=55, pos='C'),
+]
 
-## Optimization Options
+roster = run(
+    rule_set=rules.DK_NBA_RULE_SET,
+    player_pool=player_pool,
+    verbose=True,
+)
 
-Force a QB/WR or QB/TE combination from a particular team. For instance, if I wanted a guaranteed Cam Newton / Greg Olsen duo:
+# Or, alternatively, generate players from a CSV
+players = salary_download.generate_players_from_csvs(
+  salary_file_location='./salaries.csv',
+  game=rules.DRAFT_KINGS,
+)
 
-<pre><code>python optimize.py -mp 100 -duo CAR -dtype TE</pre></code>
-
-Another example pairing Antonio Brown and Ben Roethlisberger:
-
-<pre><code>python optimize.py -mp 100 -duo PIT -dtype WR</pre></code>
-
-Limit same team representation except for QB / skill player combos. Example:
-
-<pre><code>python optimize.py -mp 100 -limit y</pre></code>
-
-Run the optimizer multiple times and continually eliminate pre-optimized players from the lineup. For instance, to run three different iterations and generate three different sets of players:
-
-<pre><code>python optimize.py -i 3</pre></code>
-
-At any time, you can get a list of all possible options via:
-
-<pre><code>python optimize.py --help</pre></code>
-
-## Generating CSV for uploading multiple lineups to DraftKings
-
-DraftKings allows uploading up to 500 lineups using a single CSV file. [You can learn more about DraftKings' support for lineup uploads here.](https://playbook.draftkings.com/news/draftkings-lineup-upload-tool) This tool supports
-generating an uploadable CSV file containing the generated optimized lineups.
-
-To use this feature:
-
-1. Download the weekly salaries CSV from DraftKings
-(containing player name, DK-estimated points, salary, etc).
-2. Run `bash scripts/prepare_<nba/nfl>_contest_data.sh`.
-3. Download the [CSV upload template](https://www.draftkings.com/lineup/upload) and get the file location (probably something like `~/Downloads/DKSalaries.csv`). *Note - this file has the same name as the weekly salaries CSV when downloaded from DraftKings, which can be confusing.*
-4. Run `python optimize.py -pids <upload_tpl_location>`. Remember to specify league, constraints, number of iterations to run, etc.
-5. Upload the newly generated file to DraftKings from `data/current-upload.csv`.
-
-One nice workflow is to run the optimizer with the `-keep_pids` flag after you create your CSV; this option will put future optimizations in the same CSV file.
-
-## Projected Ownership Percentages (Experimental)
-
-Projected ownership percentages as of this writing could be downloaded from [DFS Report](https://dfsreport.com/draftkings-ownership-percentages). If you download the CSV, you can filter on projected ownership percentage. For example, only include players below 15% owned.
-
-```
-python optimize.py -po_location 'data/ownership.csv' -po 15
+roster = run(
+  rule_set=rules.DK_NBA_RULE_SET,
+  player_pool=players,
+  verbose=True,
+)
 ```
 
-## NBA
+You can see more examples in the [`examples` directory](https://github.com/BenBrostoff/draftfast/tree/master/examples).
 
-An NBA option exists for NBA contests. After downloading the DraftKings salaries for a contest:
+## Game Rules
+
+Optimizing for a particular game is as easy as setting the `RuleSet` (see the example above). Game rules in the library are in the table below:
+
+| League       | Site           | Reference  |
+| ------------- |:-------------:| :-----:|
+| NFL | DraftKings | `DK_NFL_RULE_SET` |
+| NFL | FanDuel | `FD_NFL_RULE_SET` |
+| NBA | DraftKings | `DK_NBA_RULE_SET` |
+| NBA | FanDuel | `FD_NBA_RULE_SET` |
+| MLB | DraftKings | `DK_MLB_RULE_SET` |
+| MLB | FanDuel | `FD_MLB_RULE_SET` |
+| WNBA | DraftKings | `DK_WNBA_RULE_SET` |
+| WNBA | FanDuel | `FD_WNBA_RULE_SET` |
+| PGA | FanDuel | `FD_PGA_RULE_SET` |
+| NASCAR | FanDuel | `FD_NASCAR_RULE_SET` |
+| SOCCER | DraftKings | `DK_SOCCER_RULE_SET` |
+| EuroLeague | DraftKings | `DK_EURO_LEAGUE_RULE_SET` |
+| NHL | DraftKings | `DK_NHL_RULE_SET` |
+| NBA Pickem | DraftKings | `DK_NBA_PICKEM_RULE_SET` |
+| NFL Showdown | DraftKings | `DK_NFL_SHOWDOWN_RULE_SET` |
+| NBA Showdown | DraftKings | `DK_NBA_SHOWDOWN_RULE_SET` |
+| MLB Showdown | DraftKings | `DK_MLB_SHOWDOWN_RULE_SET` |
+| XFL | DraftKings | `DK_XFL_CLASSIC_RULE_SET` |
+| Tennis | DraftKings | `DK_TEN_CLASSIC_RULE_SET` |
+
+Note that you can also tune `draftfast` for any game of your choice even if it's not implemented in the library (PRs welcome!). Using the `RuleSet` class, you can generate your own game rules that specific number of players, salary, etc. Example:
+
+```python
+from draftfast import rules
+
+golf_rules = rules.RuleSet(
+    site=rules.DRAFT_KINGS,
+    league='PGA',
+    roster_size='6',
+    position_limits=[['G', 6, 6]],
+    salary_max=50_000,
+)
+```
+
+## Settings
+
+Usage example:
+
+```python
+class Showdown(Roster):
+    POSITION_ORDER = {
+        'M': 0,
+        'F': 1,
+        'D': 2,
+        'GK': 3,
+    }
+
+
+showdown_limits = [
+    ['M', 0, 6],
+    ['F', 0, 6],
+    ['D', 0, 6],
+    ['GK', 0, 6],
+]
+
+soccer_rules = rules.RuleSet(
+    site=rules.DRAFT_KINGS,
+    league='SOCCER_SHOWDOWN',
+    roster_size=6,
+    position_limits=showdown_limits,
+    salary_max=50_000,
+    general_position_limits=[],
+)
+player_pool = salary_download.generate_players_from_csvs(
+    salary_file_location=salary_file,
+    game=rules.DRAFT_KINGS,
+)
+roster = run(
+    rule_set=soccer_rules,
+    player_pool=player_pool,
+    verbose=True,
+    roster_gen=Showdown,
+)
+```
+
+`PlayerPoolSettings`
+
+- `min_proj`
+- `max_proj`
+- `min_salary`
+- `max_salary`
+- `min_avg`
+- `max_avg`
+
+`OptimizerSettings`
+
+- `stacks` - A list of `Stack` objects. Example:
+
+```python
+roster = run(
+    rule_set=rules.DK_NHL_RULE_SET,
+    player_pool=player_pool,
+    verbose=True,
+    optimizer_settings=OptimizerSettings(
+        stacks=[
+            Stack(team='PHI', count=3),
+            Stack(team='FLA', count=3),
+            Stack(team='NSH', count=2),
+        ]
+    ),
+)
+```
+
+`Stack` can also be tuned to support different combinations of positions. For NFL,
+to only specify a QB-WRs based stack of five:
+
+```python
+Stack(
+    team='NE',
+    count=5,
+    stack_lock_pos=['QB'],
+    stack_eligible_pos=['WR'],
+)
+```
+
+`LineupConstraints`
+
+- `locked` - list of players to lock
+- `banned` - list of players to ban
+- `groups` - list of player groups constraints. See below
+
+```python
+roster = run(
+    rule_set=rules.DK_NFL_RULE_SET,
+    player_pool=player_pool,
+    verbose=True,
+    constraints=LineupConstraints(
+        locked=['Rob Gronkowski'],
+        banned=['Mark Ingram', 'Doug Martin'],
+        groups=[
+            [('Todd Gurley', 'Melvin Gordon', 'Christian McCaffrey'), (2, 3)],
+            [('Chris Carson', 'Mike Davis'), 1],
+        ]
+    )
+)
+```
+
+- `no_offense_against_defense` - Do not allow offensive players to be matched up against defensive players in the optimized lineup. Currently only implemented for soccer, NHL, and NFL -- PRs welcome!
+
+## CSV Upload
+
+```python
+from draftfast.csv_parse import uploaders
+
+uploader = uploaders.DraftKingsNBAUploader(
+    pid_file='./pid_file.csv',
+)
+uploader.write_rosters(rosters)
 
 ```
-bash scripts/prepare_nba_contest_data.sh
+
+## Support and Consulting
+
+DFS optimization is only one part of a sustainable strategy. Long-term DFS winners have the best:
+
+- Player projections
+- Bankroll management
+- Diversification in contests played
+- Diversification across lineups (see `draftfast.exposure`)
+- Research process
+- 1 hour before gametime lineup changes
+- ...and so much more
+
+DraftFast provides support and consulting services that can help with all of these. [Let's get in touch today](mailto:ben.brostoff@gmail.com).
+
+# Contributing
+
+Run tests or set of tests:
+
+```sh
+# All tests
+nosetests
+
+# Single file
+nosetests draftfast/test/test_soccer.py
+
+# Single test
+nosetests draftfast/test/test_soccer.py:test_soccer_dk_no_opp_d
 ```
 
-Currently, Rotogrinders and Numberfire are the only available datasources:
+Run linting
 
 ```
-python optimize.py -l NBA -source nba_rotogrinders
-python optimize.py -l NBA -source nba_number_fire
+flake8 draftfast
 ```
 
+# Credits
+
+Special thanks to [swanson](https://github.com/swanson/), who authored [this repo](https://github.com/swanson/degenerate), which was the inspiration for this one.
+
+Current project maintainers:
+
+- [BenBrostoff](https://github.com/BenBrostoff)
+- [sharkiteuthis](https://github.com/sharkiteuthis)

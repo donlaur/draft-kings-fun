@@ -1,10 +1,10 @@
 language: python
 python:
-    - "2.7"
+    - "3.6"
 services:
     - docker
 before_install:
     - docker build -t draft-kings-fun .
 script:
-    - docker run draft-kings-fun flake8 .
+    - docker run draft-kings-fun flake8 draftfast
     - docker run draft-kings-fun nosetests --with-coverage --cover-package=.
